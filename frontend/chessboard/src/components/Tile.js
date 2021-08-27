@@ -20,27 +20,11 @@ const green = {
 }
 
 const Tile = (props)=> {
-  if (props.xVal === 1) {
-    if (props.color === 'white') {
-      return (
-        <div style={white}>
-          <Piece/>
-        </div>
-      )
-    }
-    return (
-      <div style={green}>
-        <Piece/>
-      </div>
-    )
-  }
-  if (props.color === 'white') {
-    return (
-      <div style={white}></div>
-    )
-  }
+  console.log(props.image)
   return (
-    <div style={green}></div>
+    <div style={props.color === 'white' ? white : green}>
+      <Piece image ={props.image}/>
+    </div>
   )
 }
 

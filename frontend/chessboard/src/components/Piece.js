@@ -1,9 +1,15 @@
 import React from 'react'
 
-const Piece = ()=> {
+const Piece = (props)=> {
+  console.log(props.image)
   return (
     <div>
-      <img src={process.env.PUBLIC_URL + '/assets/Chess_plt60.png'} alt='black pawn'/>
+      {
+        props.image !== undefined ? (
+          <img src={props.image} alt='chess piece'/>
+        ) :
+        null
+      }
     </div>
   )
 }
