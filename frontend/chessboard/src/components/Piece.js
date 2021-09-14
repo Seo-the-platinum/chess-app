@@ -1,12 +1,16 @@
 import React from 'react'
 
 const Piece = (props)=> {
-  console.log(props.image)
   return (
-    <div>
+    <div style={{height: '100%'}}>
       {
         props.image !== undefined ? (
-          <img src={props.image} alt='chess piece'/>
+          <div style={{
+            backgroundImage:`url(${props.image})`,
+          }}
+            className='chess-piece'
+          >
+          </div>
         ) :
         null
       }

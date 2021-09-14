@@ -15,6 +15,7 @@ const Chessboard = ()=> {
   const horizontal = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
   const vertical = ['1', '2', '3', '4', '5', '6', '7', '8']
   const pieces=[]
+  let activePiece
 
   for (let i=0; i<2; i++) {
       const type= i === 0 ? 'l':'d'
@@ -77,6 +78,37 @@ const Chessboard = ()=> {
     })
   }
 
+  const grabPiece= (e)=> {
+    const element = e.target
+
+    if (element.classList.contains('chess-piece')) {
+      console.log(e.clientX)
+      const x = e.clientX - 50
+      const y = e.clientY - 50
+      element.style.position = 'absolute'
+      element.style.left = `${x}px`
+      element.style.top = `${y}px`
+
+      activePiece = element
+    }
+  }
+
+  const movePiece = (e)=> {
+      if (activePiece) {
+        const x = e.clientX - 50
+        const y = e.clientY - 50
+        activePiece.style.position = 'absolute';
+        activePiece.style.left = `${x}px`;
+        activePiece.style.top = `${y}px`
+      }
+  }
+
+  const dropPiece = (e)=> {
+    if(activePiece) {
+      activePiece = null
+    }
+  }
+
   horizontal.map((h, hIndex)=> {
     vertical.map((v, vIndex)=> {
       const sum = vIndex + hIndex
@@ -88,17 +120,21 @@ const Chessboard = ()=> {
         return null
       })
       if (sum % 2 === 0) {
-        board.push(<Tile color="white" image={image}/>)
+        board.push(<Tile color="white" image={image} key={`${vIndex}, ${hIndex}`}/>)
       }
       else {
-        board.push(<Tile color='green' image={image}/>)
+        board.push(<Tile color='green' image={image} key={`${vIndex}, ${hIndex}`}/>)
       }
       return null
     })
     return null
   })
   return (
-    <div style={container}>
+    <div
+      onMouseDown={e=> grabPiece(e)}
+      onMouseMove={e=> movePiece(e)}
+      onMouseUp={e=> dropPiece(e)}
+      style={container}>
       {board}
     </div>
   )
