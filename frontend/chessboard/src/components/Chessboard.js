@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import Tile from './Tile'
 
 const container = {
@@ -16,6 +16,7 @@ const Chessboard = ()=> {
   const vertical = ['1', '2', '3', '4', '5', '6', '7', '8']
   const pieces=[]
   let activePiece
+  const chessboardRef = useRef(null)
 
   for (let i=0; i<2; i++) {
       const type= i === 0 ? 'l':'d'
@@ -94,12 +95,37 @@ const Chessboard = ()=> {
   }
 
   const movePiece = (e)=> {
-      if (activePiece) {
+    const chessboard = chessboardRef.current
+
+      if (activePiece && chessboard) {
         const x = e.clientX - 50
         const y = e.clientY - 50
+        const minX = chessboard.offsetLeft - 25
+        const minY = chessboard.offsetTop - 20
+        const maxX = minX + chessboard.clientWidth - 25
+        const maxY = minY + chessboard.clientHeight - 40
         activePiece.style.position = 'absolute';
-        activePiece.style.left = `${x}px`;
-        activePiece.style.top = `${y}px`
+
+        if (x < minX) {
+          activePiece.style.left = `${minX}px`
+        }
+        else if (x > maxX) {
+          activePiece.style.left = `${maxX}px`
+        }
+        else {
+          activePiece.style.left = `${x}px`
+        }
+
+        if (y < minY) {
+          activePiece.style.top = `${minY}px`
+        }
+        else if (y > maxY) {
+          activePiece.style.top = `${maxY}px`
+        }
+        else {
+          activePiece.style.top = `${y}px`
+        }
+
       }
   }
 
@@ -134,6 +160,7 @@ const Chessboard = ()=> {
       onMouseDown={e=> grabPiece(e)}
       onMouseMove={e=> movePiece(e)}
       onMouseUp={e=> dropPiece(e)}
+      ref={chessboardRef}
       style={container}>
       {board}
     </div>
