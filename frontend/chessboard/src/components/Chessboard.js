@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import Tile from './Tile'
 
 const container = {
@@ -75,23 +75,29 @@ for (let i=0; i<8; i++) {
 
 const Chessboard = ()=> {
   const board = []
+  const [activePiece, setActivePiece] = useState(null)
   const [pieces, setPieces] = useState(initialBoardState)
+  const [gridX, setGridX] = useState(0)
+  const [gridY, setGridY] = useState(0)
   const horizontal = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
   const vertical = ['1', '2', '3', '4', '5', '6', '7', '8']
-  let activePiece
+  //let activePiece
   const chessboardRef = useRef(null)
 
   const grabPiece= (e)=> {
     const element = e.target
 
     if (element.classList.contains('chess-piece')) {
+      const chessboard = chessboardRef.current
+      setGridX(Math.floor((e.clientX - chessboard.offsetLeft)/80))
+      setGridY(Math.floor((e.clientY - chessboard.offsetTop)/80))
       const x = e.clientX - 50
       const y = e.clientY - 50
       element.style.position = 'absolute'
       element.style.left = `${x}px`
       element.style.top = `${y}px`
 
-      activePiece = element
+      setActivePiece(element)
     }
   }
 
@@ -133,11 +139,19 @@ const Chessboard = ()=> {
   const dropPiece = (e)=> {
     const chessboard = chessboardRef.current
     if(activePiece && chessboard) {
-
       const x = Math.floor((e.clientX - chessboard.offsetLeft)/80)
-      const y = Math.floor((e.clientY)/80)
-      console.log(x,y, e.clientX,e.clientY )
-      activePiece = null
+      const y = Math.floor((e.clientY - chessboard.offsetTop)/80)
+      setPieces((value)=> {
+        const pieces = value.map(p=> {
+          if (p.x === gridX && p.y === gridY) {
+            p.x = x
+            p.y = y
+          }
+          return p
+        })
+        return pieces
+      })
+      setActivePiece(null)
     }
   }
 
