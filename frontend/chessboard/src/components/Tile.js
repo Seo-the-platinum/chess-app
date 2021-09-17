@@ -20,7 +20,6 @@ const green = {
 }
 
 const Tile = (props)=> {
-  console.log(props.image)
   return (
     <div style={props.color === 'white' ? white : green}>
       <Piece image={props.image}/>

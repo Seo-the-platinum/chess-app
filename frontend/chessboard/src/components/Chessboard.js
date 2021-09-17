@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import Tile from './Tile'
 
 const container = {
@@ -10,80 +10,81 @@ const container = {
   width: '640px'
 }
 
+const initialBoardState=[];
+
+for (let i=0; i<2; i++) {
+    const type= i === 0 ? 'l':'d'
+    const y = i === 0 ? 0 : 7
+    initialBoardState.push({
+      source: `${process.env.PUBLIC_URL}/assets/Chess_k${type}t60.png`,
+      x: 4,
+      y:y,
+    })
+    initialBoardState.push({
+      source: `${process.env.PUBLIC_URL}/assets/Chess_q${type}t60.png`,
+      x: 3,
+      y:y,
+    })
+    initialBoardState.push({
+      source: `${process.env.PUBLIC_URL}/assets/Chess_r${type}t60.png`,
+      x: 0,
+      y:y,
+    })
+    initialBoardState.push({
+      source: `${process.env.PUBLIC_URL}/assets/Chess_r${type}t60.png`,
+      x: 7,
+      y:y,
+    })
+    initialBoardState.push({
+      source: `${process.env.PUBLIC_URL}/assets/Chess_b${type}t60.png`,
+      x: 2,
+      y:y,
+    })
+    initialBoardState.push({
+      source: `${process.env.PUBLIC_URL}/assets/Chess_b${type}t60.png`,
+      x: 5,
+      y:y,
+    })
+    initialBoardState.push({
+      source: `${process.env.PUBLIC_URL}/assets/Chess_n${type}t60.png`,
+      x: 1,
+      y:y,
+    })
+    initialBoardState.push({
+      source: `${process.env.PUBLIC_URL}/assets/Chess_n${type}t60.png`,
+      x: 6,
+      y:y,
+    })
+}
+
+for (let i=0; i<8; i++) {
+  initialBoardState.push({
+    source: `${process.env.PUBLIC_URL}/assets/Chess_plt60.png`,
+    x: i,
+    y: 1
+  })
+}
+
+for (let i=0; i<8; i++) {
+  initialBoardState.push({
+    source: `${process.env.PUBLIC_URL}/assets/Chess_pdt60.png`,
+    x: i,
+    y: 6,
+  })
+}
+
 const Chessboard = ()=> {
   const board = []
+  const [pieces, setPieces] = useState(initialBoardState)
   const horizontal = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
   const vertical = ['1', '2', '3', '4', '5', '6', '7', '8']
-  const pieces=[]
   let activePiece
   const chessboardRef = useRef(null)
-
-  for (let i=0; i<2; i++) {
-      const type= i === 0 ? 'l':'d'
-      const y = i === 0 ? 0 : 7
-      pieces.push({
-        source: `${process.env.PUBLIC_URL}/assets/Chess_k${type}t60.png`,
-        x: 4,
-        y:y,
-      })
-      pieces.push({
-        source: `${process.env.PUBLIC_URL}/assets/Chess_q${type}t60.png`,
-        x: 3,
-        y:y,
-      })
-      pieces.push({
-        source: `${process.env.PUBLIC_URL}/assets/Chess_r${type}t60.png`,
-        x: 0,
-        y:y,
-      })
-      pieces.push({
-        source: `${process.env.PUBLIC_URL}/assets/Chess_r${type}t60.png`,
-        x: 7,
-        y:y,
-      })
-      pieces.push({
-        source: `${process.env.PUBLIC_URL}/assets/Chess_b${type}t60.png`,
-        x: 2,
-        y:y,
-      })
-      pieces.push({
-        source: `${process.env.PUBLIC_URL}/assets/Chess_b${type}t60.png`,
-        x: 5,
-        y:y,
-      })
-      pieces.push({
-        source: `${process.env.PUBLIC_URL}/assets/Chess_n${type}t60.png`,
-        x: 1,
-        y:y,
-      })
-      pieces.push({
-        source: `${process.env.PUBLIC_URL}/assets/Chess_n${type}t60.png`,
-        x: 6,
-        y:y,
-      })
-  }
-
-  for (let i=0; i<8; i++) {
-    pieces.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_plt60.png`,
-      x: i,
-      y: 1
-    })
-  }
-
-  for (let i=0; i<8; i++) {
-    pieces.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_pdt60.png`,
-      x: i,
-      y: 6,
-    })
-  }
 
   const grabPiece= (e)=> {
     const element = e.target
 
     if (element.classList.contains('chess-piece')) {
-      console.log(e.clientX)
       const x = e.clientX - 50
       const y = e.clientY - 50
       element.style.position = 'absolute'
@@ -130,7 +131,12 @@ const Chessboard = ()=> {
   }
 
   const dropPiece = (e)=> {
-    if(activePiece) {
+    const chessboard = chessboardRef.current
+    if(activePiece && chessboard) {
+
+      const x = Math.floor((e.clientX - chessboard.offsetLeft)/80)
+      const y = Math.floor((e.clientY)/80)
+      console.log(x,y, e.clientX,e.clientY )
       activePiece = null
     }
   }
