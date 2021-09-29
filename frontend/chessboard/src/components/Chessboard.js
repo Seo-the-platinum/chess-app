@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import Tile from './Tile'
+import Referee from '../referee.js'
 
 const container = {
   display: 'flex',
@@ -13,47 +14,63 @@ const container = {
 const initialBoardState=[];
 
 for (let i=0; i<2; i++) {
-    const type= i === 0 ? 'l':'d'
+    const team = i === 0 ? 'ours': 'opponent'
+    const type = i === 0 ? 'l':'d'
     const y = i === 0 ? 0 : 7
     initialBoardState.push({
       source: `${process.env.PUBLIC_URL}/assets/Chess_k${type}t60.png`,
       x: 4,
       y:y,
+      type: 'king',
+      team: team,
     })
     initialBoardState.push({
       source: `${process.env.PUBLIC_URL}/assets/Chess_q${type}t60.png`,
       x: 3,
       y:y,
+      type: 'queen',
+      team: team,
     })
     initialBoardState.push({
       source: `${process.env.PUBLIC_URL}/assets/Chess_r${type}t60.png`,
       x: 0,
       y:y,
+      type: 'rook'
     })
     initialBoardState.push({
       source: `${process.env.PUBLIC_URL}/assets/Chess_r${type}t60.png`,
       x: 7,
       y:y,
+      type: 'rook',
+      team: team,
     })
     initialBoardState.push({
       source: `${process.env.PUBLIC_URL}/assets/Chess_b${type}t60.png`,
       x: 2,
       y:y,
+      type: 'bishop',
+      team: team,
     })
     initialBoardState.push({
       source: `${process.env.PUBLIC_URL}/assets/Chess_b${type}t60.png`,
       x: 5,
       y:y,
+      type: 'bishop',
+      team: team,
     })
     initialBoardState.push({
       source: `${process.env.PUBLIC_URL}/assets/Chess_n${type}t60.png`,
       x: 1,
       y:y,
+      type: 'knight',
+      team: team,
     })
     initialBoardState.push({
       source: `${process.env.PUBLIC_URL}/assets/Chess_n${type}t60.png`,
       x: 6,
       y:y,
+      type: 'knight',
+      team: team,
     })
 }
 
@@ -61,7 +78,9 @@ for (let i=0; i<8; i++) {
   initialBoardState.push({
     source: `${process.env.PUBLIC_URL}/assets/Chess_plt60.png`,
     x: i,
-    y: 1
+    y: 1,
+    type: 'pawn',
+    team: 'ours'
   })
 }
 
@@ -70,6 +89,8 @@ for (let i=0; i<8; i++) {
     source: `${process.env.PUBLIC_URL}/assets/Chess_pdt60.png`,
     x: i,
     y: 6,
+    type: 'pawn',
+    team: 'opponent'
   })
 }
 
@@ -83,6 +104,7 @@ const Chessboard = ()=> {
   const vertical = ['1', '2', '3', '4', '5', '6', '7', '8']
   //let activePiece
   const chessboardRef = useRef(null)
+  const referee = new Referee()
 
   const grabPiece= (e)=> {
     const element = e.target
@@ -96,7 +118,6 @@ const Chessboard = ()=> {
       element.style.position = 'absolute'
       element.style.left = `${x}px`
       element.style.top = `${y}px`
-
       setActivePiece(element)
     }
   }
@@ -144,11 +165,18 @@ const Chessboard = ()=> {
       setPieces((value)=> {
         const pieces = value.map(p=> {
           if (p.x === gridX && p.y === gridY) {
-            p.x = x
-            p.y = y
+            const validMove = referee.isValidMove(gridX, gridY, x, y, p.type, p.team)
+            if (validMove) {
+              p.x = x
+              p.y = y
+            } else {
+            activePiece.style.position = 'relative'
+            activePiece.style.removeProperty('top')
+            activePiece.style.removeProperty('left')
           }
-          return p
-        })
+        }
+        return p
+      })
         return pieces
       })
       setActivePiece(null)
