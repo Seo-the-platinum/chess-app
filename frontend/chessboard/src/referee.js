@@ -1,12 +1,32 @@
 export default class Referee {
   tileIsOccupied(x,y,boardState) {
-    console.log('checking if tile is occupied')
     const piece = boardState.find(p=> p.x === x && p.y === y)
     if (piece) {
       return true
     } else {
       return false
     }
+  }
+
+  tileIsOccupiedByOpponent(x,y,boardState, team) {
+    const piece = boardState.find(p=> p.x === x && p.y === y && p.team !== team)
+    if (piece) {
+      return true
+    } else {
+      return false
+    }
+  }
+
+  isEnPassantMove(px, py, x, y, boardState, team, type) {
+    const pawnDirection = (team === 'ours') ? 1 : -1
+    if(type === 'pawn') {
+      if ((x - px === -1 || x -px === 1) && y -py === pawnDirection) {
+        const piece = boardState.find(p=> p.x === x && p.y === y - pawnDirection)
+        console.log(piece)
+      }
+    }
+
+    return false
   }
 
   isValidMove(px, py, x, y, type, team, boardState) {
@@ -16,6 +36,7 @@ export default class Referee {
       const specialRow = (team === 'ours') ? 1 : 6
       const pawnDirection = (team === 'ours') ? 1: -1
 
+      //MOVEMENT LOGIC
       if (px === x && py === specialRow && y - py === 2*pawnDirection) {
         if (!this.tileIsOccupied(x,y,boardState) &&
         !this.tileIsOccupied(x,y-pawnDirection, boardState)) {
@@ -25,6 +46,19 @@ export default class Referee {
         if (!this.tileIsOccupied(x,y,boardState)) {
           return true
         }
+      }
+    //ATTACK LOGIC
+      else if (x - px === -1 && y -py === pawnDirection) {
+        console.log('attack in upper or bottom left corner')
+        if (this.tileIsOccupiedByOpponent(x,y,boardState, team)) {
+          return true
+          }
+        }
+      else if (x - px === 1 && y - py === pawnDirection) {
+        console.log('attack in upper or bottom right corner')
+        if (this.tileIsOccupiedByOpponent(x,y,boardState, team)) {
+          return true
+          }
       }
     }
     return false
