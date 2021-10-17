@@ -80,7 +80,8 @@ for (let i=0; i<8; i++) {
     x: i,
     y: 1,
     type: 'pawn',
-    team: 'ours'
+    team: 'ours',
+    enPassant: false,
   })
 }
 
@@ -90,7 +91,8 @@ for (let i=0; i<8; i++) {
     x: i,
     y: 6,
     type: 'pawn',
-    team: 'opponent'
+    team: 'opponent',
+    enPassant: false,
   })
 }
 
@@ -184,16 +186,45 @@ const Chessboard = ()=> {
           currentPiece.team,
           currentPiece.type
         )
-        //REDUCE FUNCTION
-        if (validMove) {
-          const updatedPieces = pieces.reduce((results, piece) => {
 
+        const pawnDirection = currentPiece.team === 'ours' ? 1: -1
+
+        if (isEnPassant) {
+          const updatedPieces = pieces.reduce((results, piece)=> {
             if (piece.x === gridX && piece.y === gridY) {
+              piece.enPassant = false
+              piece.x = x
+              piece.y = y
+              results.push(piece
+              )
+            } else if (!(piece.x === x && piece.y === y - pawnDirection)) {
+              if (piece.type === 'pawn') {
+                piece.enPassant =  false
+              }
+              results.push(piece)
+            }
+            return results
+          },[])
+          setPieces(updatedPieces)
+        }
+        //REDUCE FUNCTION
+        else if (validMove) {
+          const updatedPieces = pieces.reduce((results, piece) => {
+            if (piece.x === gridX && piece.y === gridY) {
+              if (Math.abs(gridY - y) === 2 && piece.type === 'pawn') {
+                console.log('en passant')
+                piece.enPassant = true
+              } else {
+                piece.enPassant = false
+              }
               piece.x = x
               piece.y = y
               results.push(piece);
             }
             else if (!(piece.x === x && piece.y === y)) {
+              if (piece.type === 'pawn') {
+                piece.enPassant = false
+              }
               results.push(piece);
             }
             return results

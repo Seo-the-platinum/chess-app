@@ -21,8 +21,10 @@ export default class Referee {
     const pawnDirection = (team === 'ours') ? 1 : -1
     if(type === 'pawn') {
       if ((x - px === -1 || x -px === 1) && y -py === pawnDirection) {
-        const piece = boardState.find(p=> p.x === x && p.y === y - pawnDirection)
-        console.log(piece)
+        const piece = boardState.find(p=> p.x === x && p.y === y - pawnDirection && p.enPassant)
+        if (piece) {
+          return true
+        }
       }
     }
 
