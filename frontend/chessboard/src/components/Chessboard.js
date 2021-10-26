@@ -1,6 +1,13 @@
 import React, { useRef, useState } from 'react'
 import Tile from './Tile'
 import Referee from '../referee.js'
+import {
+  HORIZONTAL,
+  VERTICAL,
+  GRIDSIZE,
+  initialBoardState,
+  samePosition,
+ } from '../Constants.js'
 
 const container = {
   display: 'flex',
@@ -11,99 +18,11 @@ const container = {
   width: '640px'
 }
 
-const initialBoardState=[];
-
-for (let i=0; i<2; i++) {
-    const team = i === 0 ? 'ours': 'opponent'
-    const type = i === 0 ? 'l':'d'
-    const y = i === 0 ? 0 : 7
-    initialBoardState.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_k${type}t60.png`,
-      x: 4,
-      y:y,
-      type: 'king',
-      team: team,
-    })
-    initialBoardState.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_q${type}t60.png`,
-      x: 3,
-      y:y,
-      type: 'queen',
-      team: team,
-    })
-    initialBoardState.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_r${type}t60.png`,
-      x: 0,
-      y:y,
-      type: 'rook'
-    })
-    initialBoardState.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_r${type}t60.png`,
-      x: 7,
-      y:y,
-      type: 'rook',
-      team: team,
-    })
-    initialBoardState.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_b${type}t60.png`,
-      x: 2,
-      y:y,
-      type: 'bishop',
-      team: team,
-    })
-    initialBoardState.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_b${type}t60.png`,
-      x: 5,
-      y:y,
-      type: 'bishop',
-      team: team,
-    })
-    initialBoardState.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_n${type}t60.png`,
-      x: 1,
-      y:y,
-      type: 'knight',
-      team: team,
-    })
-    initialBoardState.push({
-      source: `${process.env.PUBLIC_URL}/assets/Chess_n${type}t60.png`,
-      x: 6,
-      y:y,
-      type: 'knight',
-      team: team,
-    })
-}
-
-for (let i=0; i<8; i++) {
-  initialBoardState.push({
-    source: `${process.env.PUBLIC_URL}/assets/Chess_plt60.png`,
-    x: i,
-    y: 1,
-    type: 'pawn',
-    team: 'ours',
-    enPassant: false,
-  })
-}
-
-for (let i=0; i<8; i++) {
-  initialBoardState.push({
-    source: `${process.env.PUBLIC_URL}/assets/Chess_pdt60.png`,
-    x: i,
-    y: 6,
-    type: 'pawn',
-    team: 'opponent',
-    enPassant: false,
-  })
-}
-
 const Chessboard = ()=> {
   const board = []
   const [activePiece, setActivePiece] = useState(null)
   const [pieces, setPieces] = useState(initialBoardState)
-  const [gridX, setGridX] = useState(0)
-  const [gridY, setGridY] = useState(0)
-  const horizontal = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-  const vertical = ['1', '2', '3', '4', '5', '6', '7', '8']
+  const [grabPosition, setGrabPosition] = useState({x:-1, y: -1})
   const chessboardRef = useRef(null)
   const referee = new Referee()
 
@@ -112,10 +31,11 @@ const Chessboard = ()=> {
 
     if (element.classList.contains('chess-piece')) {
       const chessboard = chessboardRef.current
-      setGridX(Math.floor((e.clientX - chessboard.offsetLeft)/80))
-      setGridY(Math.floor((e.clientY - chessboard.offsetTop)/80))
-      const x = e.clientX - 50
-      const y = e.clientY - 50
+      const grabX = Math.floor((e.clientX - chessboard.offsetLeft)/GRIDSIZE)
+      const grabY = Math.floor((e.clientY - chessboard.offsetTop)/GRIDSIZE)
+      setGrabPosition({x: grabX, y: grabY})
+      const x = e.clientX - GRIDSIZE / 2
+      const y = e.clientY - GRIDSIZE / 2
       element.style.position = 'absolute'
       element.style.left = `${x}px`
       element.style.top = `${y}px`
@@ -127,8 +47,8 @@ const Chessboard = ()=> {
     const chessboard = chessboardRef.current
 
       if (activePiece && chessboard) {
-        const x = e.clientX - 50
-        const y = e.clientY - 50
+        const x = e.clientX - GRIDSIZE / 2
+        const y = e.clientY - GRIDSIZE / 2
         const minX = chessboard.offsetLeft - 25
         const minY = chessboard.offsetTop - 20
         const maxX = minX + chessboard.clientWidth - 25
@@ -161,43 +81,37 @@ const Chessboard = ()=> {
   const dropPiece = (e)=> {
     const chessboard = chessboardRef.current
     if(activePiece && chessboard) {
-      const x = Math.floor((e.clientX - chessboard.offsetLeft)/80)
-      const y = Math.floor((e.clientY - chessboard.offsetTop)/80)
-
-      const currentPiece = pieces.find(p=> p.x === gridX && p.y === gridY)
-      const attackedPiece = pieces.find(p=> p.x === x && p.y === y)
+      const x = Math.floor((e.clientX - chessboard.offsetLeft)/GRIDSIZE)
+      const y = Math.floor((e.clientY - chessboard.offsetTop)/GRIDSIZE)
+      const currentPiece = pieces.find(p=> samePosition(p.position, grabPosition))
 
       if (currentPiece) {
         const validMove = referee.isValidMove(
-          gridX,
-          gridY,
-          x,
-          y,
+          grabPosition,
+          {x, y},
           currentPiece.type,
           currentPiece.team,
           pieces
         )
         const isEnPassant = referee.isEnPassantMove(
-          gridX,
-          gridY,
-          x,
-          y,
+          grabPosition,
+          {x, y},
           pieces,
           currentPiece.team,
           currentPiece.type
         )
 
-        const pawnDirection = currentPiece.team === 'ours' ? 1: -1
+        const pawnDirection = currentPiece.team === 'ours' ? -1: 1
 
         if (isEnPassant) {
           const updatedPieces = pieces.reduce((results, piece)=> {
-            if (piece.x === gridX && piece.y === gridY) {
+            if (samePosition(piece.position, grabPosition)) {
               piece.enPassant = false
-              piece.x = x
-              piece.y = y
+              piece.position.x = x
+              piece.position.y = y
               results.push(piece
               )
-            } else if (!(piece.x === x && piece.y === y - pawnDirection)) {
+            } else if (!samePosition(piece.position, {x, y: y-pawnDirection})) {
               if (piece.type === 'pawn') {
                 piece.enPassant =  false
               }
@@ -210,18 +124,13 @@ const Chessboard = ()=> {
         //REDUCE FUNCTION
         else if (validMove) {
           const updatedPieces = pieces.reduce((results, piece) => {
-            if (piece.x === gridX && piece.y === gridY) {
-              if (Math.abs(gridY - y) === 2 && piece.type === 'pawn') {
-                console.log('en passant')
-                piece.enPassant = true
-              } else {
-                piece.enPassant = false
-              }
-              piece.x = x
-              piece.y = y
+            if (samePosition(piece.position, grabPosition)) {
+              piece.enPassant = Math.abs(grabPosition.y - y) === 2 && piece.type === 'pawn'
+              piece.position.x = x
+              piece.position.y = y
               results.push(piece);
             }
-            else if (!(piece.x === x && piece.y === y)) {
+            else if (!samePosition(piece.position, {x,y})) {
               if (piece.type === 'pawn') {
                 piece.enPassant = false
               }
@@ -240,11 +149,17 @@ const Chessboard = ()=> {
       //UPDATES PIECE POSITION
       setPieces((value)=> {
         const pieces = value.map(p=> {
-          if (p.x === gridX && p.y === gridY) {
-            const validMove = referee.isValidMove(gridX, gridY, x, y, p.type, p.team, value)
+          if (samePosition(p.position, grabPosition)) {
+            const validMove = referee.isValidMove(
+              grabPosition,
+              {x, y},
+              p.type,
+              p.team,
+              value
+            )
             if (validMove) {
-              p.x = x
-              p.y = y
+              p.position.x = x
+              p.position.y = y
             } else {
             activePiece.style.position = 'relative'
             activePiece.style.removeProperty('top')
@@ -259,26 +174,17 @@ const Chessboard = ()=> {
     }
   }
 
-  horizontal.map((h, hIndex)=> {
-    vertical.map((v, vIndex)=> {
+  HORIZONTAL.map((h, hIndex)=> {
+    VERTICAL.map((v, vIndex)=> {
       const sum = vIndex + hIndex
-      let image = undefined
-      pieces.map(p=> {
-        if (p.x === vIndex && p.y === hIndex) {
-          image = p.source
-        }
-        return null
-      })
-      if (sum % 2 === 0) {
-        board.push(<Tile color="white" image={image} key={`${vIndex}, ${hIndex}`}/>)
-      }
-      else {
-        board.push(<Tile color='green' image={image} key={`${vIndex}, ${hIndex}`}/>)
-      }
+      const piece = pieces.find(p=> samePosition(p.position, {x: vIndex, y: hIndex}))
+      let image = piece ? piece.source : undefined
+      board.push(<Tile image={image} key={`${vIndex}, ${hIndex}`} number={sum} />)
       return null
     })
     return null
   })
+
   return (
     <div
       onMouseDown={e=> grabPiece(e)}

@@ -21,7 +21,7 @@ const green = {
 
 const Tile = (props)=> {
   return (
-    <div style={props.color === 'white' ? white : green}>
+    <div style={props.number % 2 === 0 ? white : green}>
       <Piece image={props.image}/>
     </div>
   )
