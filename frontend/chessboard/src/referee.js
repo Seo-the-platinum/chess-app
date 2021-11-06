@@ -203,6 +203,32 @@ export default class Referee {
           }
         }
       }
+    } else if (type === 'queen') {
+      console.log('queen')
+      for (let i = 1; i < 8; i++) {
+        let multiplierX = (desiredPosition.x < initialPosition.x) ?  -1 : (desiredPosition.x > initialPosition.x) ? 1 :0
+        let multiplierY = (desiredPosition.y < initialPosition.y) ? -1 : (desiredPosition.y > initialPosition.y) ? 1 : 0
+        let passedPosition = {x: initialPosition.x + (i * multiplierX), y: initialPosition.y + (i * multiplierY)}
+        if (samePosition(passedPosition, desiredPosition)) {
+          if (this.tileIsEmptyOrOccupiedByOpponent(passedPosition, boardState, team)) {
+            return true
+          }
+        } else if (this.tileIsOccupied(passedPosition, boardState)) {
+          break;
+        }
+      }
+    } else if (type === 'king') {
+      console.log('king')
+      let multiplierX = (desiredPosition.x < initialPosition.x) ? -1 : (desiredPosition.x > initialPosition.x) ? 1 : 0
+      let multiplierY = (desiredPosition.y < initialPosition.y) ? -1 : (desiredPosition.y > initialPosition.y) ? 1 : 0
+      let passedPosition = {x: initialPosition.x + (multiplierX), y: initialPosition.y + multiplierY}
+      if (samePosition(passedPosition, desiredPosition)) {
+        if (this.tileIsEmptyOrOccupiedByOpponent(passedPosition, boardState, team)) {
+          return true
+        }
+      } else if (this.tileIsOccupied(passedPosition, boardState)) {
+          return false
+      }
     }
     return false
   }
