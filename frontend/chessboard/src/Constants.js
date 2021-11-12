@@ -13,6 +13,7 @@ export const samePosition = (p1, p2)=> {
 
 export const initialBoardState = [
   {
+    castle: true,
     source: `${process.env.PUBLIC_URL}/assets/Chess_kdt60.png`,
     position: new Position(4,7),
     type: 'king',
@@ -20,10 +21,9 @@ export const initialBoardState = [
   },
 
   {
+    castle: true,
     source: `${process.env.PUBLIC_URL}/assets/Chess_klt60.png`,
     position: new Position(4,0),
-    //x: 4,
-    //y:0,
     type: 'king',
     team: 'opponent',
   },
@@ -31,8 +31,6 @@ export const initialBoardState = [
   {
     source: `${process.env.PUBLIC_URL}/assets/Chess_qdt60.png`,
     position: new Position(3,7),
-    //x: 3,
-    //y:7,
     type: 'queen',
     team: 'ours',
   },
@@ -40,8 +38,6 @@ export const initialBoardState = [
   {
     source: `${process.env.PUBLIC_URL}/assets/Chess_qlt60.png`,
     position: new Position(3,0),
-    //x: 3,
-    //y:0,
     type: 'queen',
     team: 'opponent',
   },
@@ -112,44 +108,38 @@ export const initialBoardState = [
   {
     source: `${process.env.PUBLIC_URL}/assets/Chess_nlt60.png`,
     position: new Position(6,0),
-    //x: 6,
-    //y:0,
     type: 'knight',
     team: 'opponent',
   },
 
   {
+    castle: true,
     source: `${process.env.PUBLIC_URL}/assets/Chess_rdt60.png`,
     position: new Position(0,7),
-    //x: 0,
-    //y:7,
     type: 'rook',
     team: 'ours',
   },
 
   {
+    castle: true,
     source: `${process.env.PUBLIC_URL}/assets/Chess_rdt60.png`,
     position: new Position(7,7),
-    //x: 7,
-    //y:7,
     type: 'rook',
     team: 'ours',
   },
 
   {
+    castle: true,
     source: `${process.env.PUBLIC_URL}/assets/Chess_rlt60.png`,
     position: new Position(0,0),
-    //x: 0,
-    //y:0,
     type: 'rook',
     team: 'opponent',
   },
 
   {
+    castle: true,
     source: `${process.env.PUBLIC_URL}/assets/Chess_rlt60.png`,
     position: new Position(7,0),
-    //x: 7,
-    //y:0,
     type: 'rook',
     team: 'opponent',
   },

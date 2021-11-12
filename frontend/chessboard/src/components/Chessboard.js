@@ -93,6 +93,7 @@ const Chessboard = ()=> {
           currentPiece.team,
           pieces
         )
+
         const isEnPassant = referee.isEnPassantMove(
           grabPosition,
           {x, y},
@@ -109,8 +110,7 @@ const Chessboard = ()=> {
               piece.enPassant = false
               piece.position.x = x
               piece.position.y = y
-              results.push(piece
-              )
+              results.push(piece)
             } else if (!samePosition(piece.position, {x, y: y-pawnDirection})) {
               if (piece.type === 'pawn') {
                 piece.enPassant =  false
@@ -121,6 +121,7 @@ const Chessboard = ()=> {
           },[])
           setPieces(updatedPieces)
         }
+
         //REDUCE FUNCTION
         else if (validMove) {
           const updatedPieces = pieces.reduce((results, piece) => {
