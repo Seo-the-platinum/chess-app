@@ -102,7 +102,27 @@ const Chessboard = ()=> {
           currentPiece.type
         )
 
+        const isPromotion = referee.isPromotion(
+          grabPosition,
+          {x,y},
+          pieces,
+          currentPiece.team,
+          currentPiece.type
+        )
+
         const pawnDirection = currentPiece.team === 'ours' ? -1: 1
+
+        if (isPromotion) {
+          const updatedPieces = pieces.reduce((results, piece)=> {
+            if (samePosition(piece.position, grabPosition)) {
+              piece.type = 'queen'
+              piece.source = (currentPiece.team === 'ours') ? `${process.env.PUBLIC_URL}/assets/Chess_qdt60.png` : `${process.env.PUBLIC_URL}/assets/Chess_qlt60.png`
+              results.push(piece)
+            }
+            return results
+          }, [])
+          setPieces(updatedPieces)
+        }
 
         if (isEnPassant) {
           const updatedPieces = pieces.reduce((results, piece)=> {

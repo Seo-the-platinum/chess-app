@@ -31,10 +31,13 @@ export default class Referee {
     const enemies = boardState.filter(p=> {
       return p.team !== team
     })
-    const vulnerable = enemies.find(e=> {
-      this.isValidMove(e.position, position, e.type, e.team, boardState)
+    const ep = enemies.filter(e => {
+      if (this.isValidMove(e.position, position, e.type, e.team, boardState) === true) {
+        return true
+      }
+      return false
     })
-    if (vulnerable) {
+    if (ep.length > 0) {
       return false
     }
     return true
@@ -60,6 +63,22 @@ export default class Referee {
     return false
   }
 
+  isPromotion(
+    initialPosition,
+    desiredPosition,
+    boardState,
+    team,
+    type
+  ) {
+    const pawnDirection = (team === 'ours') ? -1 : 1
+    const promoteRow = (team === 'ours') ? 0 : 7
+    if (type === 'pawn') {
+      if (initialPosition.y +  pawnDirection === promoteRow) {
+        return true
+      }
+    }
+  }
+
   isValidMove(
     initialPosition,
     desiredPosition,
@@ -71,7 +90,6 @@ export default class Referee {
     if ( type === 'pawn') {
       const specialRow = (team === 'ours') ? 6 : 1
       const pawnDirection = (team === 'ours') ? -1: 1
-
       //MOVEMENT LOGIC
       if (initialPosition.x === desiredPosition.x && initialPosition.y === specialRow && desiredPosition.y - initialPosition.y === 2*pawnDirection) {
         if (!this.tileIsOccupied(desiredPosition,boardState) &&
@@ -95,7 +113,6 @@ export default class Referee {
           }
       }
     } else if(type === 'knight') {
-      console.log('knight')
       //moving logic for knight
       //8 different moving patterns
       for (let i = -1; i < 2; i+=2) {
@@ -135,7 +152,6 @@ export default class Referee {
             }
           } else {
               if (this.tileIsOccupied(passedPosition, boardState)) {
-                console.log('illegal move')
                 break;
               }
           }
@@ -150,7 +166,6 @@ export default class Referee {
             }
           } else {
               if (this.tileIsOccupied(passedPosition, boardState)) {
-                console.log('illegal move')
                 break;
               }
             }
@@ -165,7 +180,6 @@ export default class Referee {
             }
           } else {
             if (this.tileIsOccupied(passedPosition, boardState)) {
-              console.log('illegal move')
               break;
             }
           }
@@ -180,7 +194,6 @@ export default class Referee {
             }
           } else {
               if (this.tileIsOccupied(passedPosition, boardState)) {
-                console.log('illegal move')
                 break;
               }
           }
@@ -188,7 +201,6 @@ export default class Referee {
       }
     } else if (type === 'rook') {
       if (initialPosition.x === desiredPosition.x) {
-        console.log('moving vertically')
         for (let i = 1; i < 8; i++) {
           let multiplier = (desiredPosition.y < initialPosition.y) ? -1 : 1
           let passedPosition = {x: initialPosition.x, y: initialPosition.y + (i * multiplier)}
@@ -202,7 +214,6 @@ export default class Referee {
         }
       }
       if (initialPosition.y === desiredPosition.y) {
-        console.log('moving horizontally')
         for (let i = 1; i < 8; i++) {
           let multiplier = (desiredPosition.x < initialPosition.x) ? -1: 1
           let passedPosition = { x:initialPosition.x + (i * multiplier), y: initialPosition.y}
@@ -216,7 +227,6 @@ export default class Referee {
         }
       }
     } else if (type === 'queen') {
-      console.log('queen')
       for (let i = 1; i < 8; i++) {
         let multiplierX = (desiredPosition.x < initialPosition.x) ?  -1 : (desiredPosition.x > initialPosition.x) ? 1 :0
         let multiplierY = (desiredPosition.y < initialPosition.y) ? -1 : (desiredPosition.y > initialPosition.y) ? 1 : 0
@@ -230,7 +240,6 @@ export default class Referee {
         }
       }
     } else if (type === 'king') {
-      console.log('king')
       let multiplierX = (desiredPosition.x < initialPosition.x) ? -1 : (desiredPosition.x > initialPosition.x) ? 1 : 0
       let multiplierY = (desiredPosition.y < initialPosition.y) ? -1 : (desiredPosition.y > initialPosition.y) ? 1 : 0
       let passedPosition = {x: initialPosition.x + (multiplierX), y: initialPosition.y + multiplierY}
@@ -240,38 +249,36 @@ export default class Referee {
             console.log('long castle attempt')
             for ( let i = 1; i < 3; i++) {
               let passedPosition = {x: initialPosition.x -i, y: initialPosition.y}
-              if(this.tileIsSafe(desiredPosition, boardState, team)) {
-              if (samePosition(passedPosition, desiredPosition)) {
-                if (!this.tileIsOccupied({x:passedPosition.x - 1, y: passedPosition.y}, boardState)) {
-                  const king = boardState.find(p => p.type === type && p.team === team)
-                  const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 0 && p.castle)
-                  rook.position.x = desiredPosition.x + 1
-                  rook.castle = false
-                  king.castle = false
-                  return true
+              if (this.tileIsSafe(passedPosition, boardState, team)) {
+                if (samePosition(passedPosition, desiredPosition)) {
+                  if (!this.tileIsOccupied({x:passedPosition.x - 1, y: passedPosition.y}, boardState)) {
+                    const king = boardState.find(p => p.type === type && p.team === team)
+                    const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 0 && p.castle)
+                    rook.position.x = desiredPosition.x + 1
+                    rook.castle = false
+                    king.castle = false
+                    return true
+                  }
+                } else if (this.tileIsOccupied(passedPosition, boardState)) {
+                  break;
                 }
-              } else if (this.tileIsOccupied(passedPosition, boardState)) {
-                console.log('false')
-                break;
               }
-            }
             }
           } else if (desiredPosition.x - initialPosition.x === 2) {
             console.log('short castle attempt')
             for ( let i = 1; i < 3; i++) {
               let passedPosition = {x: initialPosition.x + i, y: initialPosition.y}
-              console.log(passedPosition, desiredPosition, i)
-              if (samePosition(passedPosition, desiredPosition)) {
-                  console.log('same')
-                const king = boardState.find(p => p.type === type && p.team === team)
-                const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 7 && p.castle)
-                console.log(rook)
-                rook.position.x = desiredPosition.x - 1
-                rook.castle = false
-                king.castle = false
-                return true
-              } else if (this.tileIsOccupied(passedPosition, boardState)) {
-                break;
+              if (this.tileIsSafe(passedPosition, boardState, team)) {
+                if (samePosition(passedPosition, desiredPosition)) {
+                  const king = boardState.find(p => p.type === type && p.team === team)
+                  const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 7 && p.castle)
+                  rook.position.x = desiredPosition.x - 1
+                  rook.castle = false
+                  king.castle = false
+                  return true
+                } else if (this.tileIsOccupied(passedPosition, boardState)) {
+                  break;
+                }
               }
             }
           }
