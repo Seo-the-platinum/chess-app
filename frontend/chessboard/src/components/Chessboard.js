@@ -15,7 +15,7 @@ const container = {
   borderColor: 'black',
   borderWidth: '2',
   flexWrap: 'wrap',
-  width: '640px'
+  width: '640px',
 }
 
 const Chessboard = ()=> {
@@ -23,6 +23,8 @@ const Chessboard = ()=> {
   const [activePiece, setActivePiece] = useState(null)
   const [pieces, setPieces] = useState(initialBoardState)
   const [grabPosition, setGrabPosition] = useState({x:-1, y: -1})
+  const [turn, setTurn] = useState('opponent')
+  const [check, setCheck] = useState(false)
   const chessboardRef = useRef(null)
   const referee = new Referee()
 
@@ -84,114 +86,136 @@ const Chessboard = ()=> {
       const x = Math.floor((e.clientX - chessboard.offsetLeft)/GRIDSIZE)
       const y = Math.floor((e.clientY - chessboard.offsetTop)/GRIDSIZE)
       const currentPiece = pieces.find(p=> samePosition(p.position, grabPosition))
+      if (currentPiece.team === turn) {
+        if (currentPiece) {
+          const validMove = referee.isValidMove(
+            grabPosition,
+            {x, y},
+            currentPiece.type,
+            currentPiece.team,
+            pieces,
+            check
+          )
 
-      if (currentPiece) {
-        const validMove = referee.isValidMove(
-          grabPosition,
-          {x, y},
-          currentPiece.type,
-          currentPiece.team,
-          pieces
-        )
+          const isEnPassant = referee.isEnPassantMove(
+            grabPosition,
+            {x, y},
+            pieces,
+            currentPiece.team,
+            currentPiece.type
+          )
 
-        const isEnPassant = referee.isEnPassantMove(
-          grabPosition,
-          {x, y},
-          pieces,
-          currentPiece.team,
-          currentPiece.type
-        )
+          const isPromotion = referee.isPromotion(
+            grabPosition,
+            {x,y},
+            pieces,
+            currentPiece.team,
+            currentPiece.type
+          )
 
-        const isPromotion = referee.isPromotion(
-          grabPosition,
-          {x,y},
-          pieces,
-          currentPiece.team,
-          currentPiece.type
-        )
-
-        const pawnDirection = currentPiece.team === 'ours' ? -1: 1
-
-        if (isPromotion) {
-          const updatedPieces = pieces.reduce((results, piece)=> {
-            if (samePosition(piece.position, grabPosition)) {
-              piece.type = 'queen'
-              piece.source = (currentPiece.team === 'ours') ? `${process.env.PUBLIC_URL}/assets/Chess_qdt60.png` : `${process.env.PUBLIC_URL}/assets/Chess_qlt60.png`
-              results.push(piece)
-            }
-            return results
-          }, [])
-          setPieces(updatedPieces)
-        }
-
-        if (isEnPassant) {
-          const updatedPieces = pieces.reduce((results, piece)=> {
-            if (samePosition(piece.position, grabPosition)) {
-              piece.enPassant = false
-              piece.position.x = x
-              piece.position.y = y
-              results.push(piece)
-            } else if (!samePosition(piece.position, {x, y: y-pawnDirection})) {
-              if (piece.type === 'pawn') {
-                piece.enPassant =  false
-              }
-              results.push(piece)
-            }
-            return results
-          },[])
-          setPieces(updatedPieces)
-        }
-
-        //REDUCE FUNCTION
-        else if (validMove) {
-          const updatedPieces = pieces.reduce((results, piece) => {
-            if (samePosition(piece.position, grabPosition)) {
-              piece.enPassant = Math.abs(grabPosition.y - y) === 2 && piece.type === 'pawn'
-              piece.position.x = x
-              piece.position.y = y
-              results.push(piece);
-            }
-            else if (!samePosition(piece.position, {x,y})) {
-              if (piece.type === 'pawn') {
-                piece.enPassant = false
-              }
-              results.push(piece);
-            }
-            return results
-          }, [])
-          setPieces(updatedPieces)
-
-        } else {
-          activePiece.style.position = 'relative'
-          activePiece.style.removeProperty('top')
-          activePiece.style.removeProperty('left')
-        }
-      }
-      //UPDATES PIECE POSITION
-      setPieces((value)=> {
-        const pieces = value.map(p=> {
-          if (samePosition(p.position, grabPosition)) {
-            const validMove = referee.isValidMove(
+          const isCheck = referee.isCheck(
               grabPosition,
-              {x, y},
-              p.type,
-              p.team,
-              value
-            )
-            if (validMove) {
-              p.position.x = x
-              p.position.y = y
-            } else {
+              {x,y},
+              pieces,
+              currentPiece.team,
+              currentPiece.type
+          )
+
+          const pawnDirection = currentPiece.team === 'ours' ? -1: 1
+
+          if (isCheck) {
+            setCheck(true)
+          }
+          if (isPromotion) {
+            const updatedPieces = pieces.reduce((results, piece)=> {
+              if (samePosition(piece.position, grabPosition)) {
+                piece.type = 'queen'
+                piece.source = (currentPiece.team === 'ours') ? `${process.env.PUBLIC_URL}/assets/Chess_qdt60.png` : `${process.env.PUBLIC_URL}/assets/Chess_qlt60.png`
+                results.push(piece)
+              }
+              return results
+            }, [])
+            setPieces(updatedPieces)
+            setTurn(turn === 'opponent' ? 'ours': 'opponent')
+          }
+
+          if (isEnPassant) {
+            const updatedPieces = pieces.reduce((results, piece)=> {
+              if (samePosition(piece.position, grabPosition)) {
+                piece.enPassant = false
+                piece.position.x = x
+                piece.position.y = y
+                results.push(piece)
+              } else if (!samePosition(piece.position, {x, y: y-pawnDirection})) {
+                if (piece.type === 'pawn') {
+                  piece.enPassant =  false
+                }
+                results.push(piece)
+              }
+              return results
+            },[])
+            setPieces(updatedPieces)
+            setTurn(turn === 'opponent' ? 'ours': 'opponent')
+
+          }
+          //REDUCE FUNCTION
+          else if (validMove) {
+            const updatedPieces = pieces.reduce((results, piece) => {
+              if (samePosition(piece.position, grabPosition)) {
+                piece.enPassant = Math.abs(grabPosition.y - y) === 2 && piece.type === 'pawn'
+                piece.position.x = x
+                piece.position.y = y
+                results.push(piece);
+              }
+              else if (!samePosition(piece.position, {x,y})) {
+                if (piece.type === 'pawn') {
+                  piece.enPassant = false
+                }
+                results.push(piece);
+              }
+              return results
+            }, [])
+            setPieces(updatedPieces)
+            setTurn(turn === 'opponent' ? 'ours': 'opponent')
+
+
+          } else {
             activePiece.style.position = 'relative'
             activePiece.style.removeProperty('top')
             activePiece.style.removeProperty('left')
           }
         }
-        return p
-      })
-        return pieces
-      })
-      setActivePiece(null)
+        //UPDATES PIECE POSITION
+        setPieces((value)=> {
+          const pieces = value.map(p=> {
+            if (samePosition(p.position, grabPosition)) {
+              const validMove = referee.isValidMove(
+                grabPosition,
+                {x, y},
+                p.type,
+                p.team,
+                value
+              )
+              if (validMove) {
+                p.position.x = x
+                p.position.y = y
+              } else {
+              activePiece.style.position = 'relative'
+              activePiece.style.removeProperty('top')
+              activePiece.style.removeProperty('left')
+            }
+          }
+          return p
+        })
+          return pieces
+        })
+        setActivePiece(null)
+      } else {
+        activePiece.style.position = 'relative'
+        activePiece.style.removeProperty('top')
+        activePiece.style.removeProperty('left')
+        setActivePiece(null)
+      }
     }
   }
 
@@ -207,13 +231,16 @@ const Chessboard = ()=> {
   })
 
   return (
-    <div
-      onMouseDown={e=> grabPiece(e)}
-      onMouseMove={e=> movePiece(e)}
-      onMouseUp={e=> dropPiece(e)}
-      ref={chessboardRef}
-      style={container}>
-      {board}
+    <div>
+      <div>{turn === 'ours' ? 'Dark': 'Light'}</div>
+      <div
+        onMouseDown={e=> grabPiece(e)}
+        onMouseMove={e=> movePiece(e)}
+        onMouseUp={e=> dropPiece(e)}
+        ref={chessboardRef}
+        style={container}>
+        {board}
+      </div>
     </div>
   )
 }
