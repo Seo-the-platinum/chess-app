@@ -18,6 +18,7 @@ export const initialBoardState = [
     position: new Position(4,7),
     type: 'king',
     team: 'ours',
+    checked: false,
   },
 
   {
@@ -26,6 +27,7 @@ export const initialBoardState = [
     position: new Position(4,0),
     type: 'king',
     team: 'opponent',
+    checked: false,
   },
 
   {

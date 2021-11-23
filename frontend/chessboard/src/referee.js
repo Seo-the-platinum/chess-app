@@ -3,6 +3,7 @@ import {
 } from './Constants'
 
 export default class Referee {
+
   tileIsOccupied(position,boardState) {
     const piece = boardState.find(p=> samePosition(p.position, position))
     if (piece) {
@@ -89,8 +90,23 @@ export default class Referee {
     if (this.isValidMove(initialPosition, desiredPosition, type, team, boardState)) {
       const eKing = boardState.find(k=> k.team !== team)
       if (this.isValidMove(desiredPosition, eKing.position, type, team, boardState)) {
+        eKing.checked = true
+        eKing.castle = false
         return true
       }
+    }
+  }
+
+  isCheckMate(
+    initialPosition,
+    desiredPosition,
+    boardState,
+    team,
+    type
+  ) {
+    if (this.validMove(initialPosition, desiredPosition, type, team, boardState)) {
+      const eKing = boardState.find(k => k.team !== team)
+      
     }
   }
 
@@ -100,7 +116,7 @@ export default class Referee {
     type,
     team,
     boardState,
-    check
+    checked
   ) {
     if (desiredPosition !== initialPosition) {
       if ( type === 'pawn') {
@@ -256,63 +272,66 @@ export default class Referee {
           }
         }
       } else if (type === 'king') {
-        console.log(check)
         let multiplierX = (desiredPosition.x < initialPosition.x) ? -1 : (desiredPosition.x > initialPosition.x) ? 1 : 0
         let multiplierY = (desiredPosition.y < initialPosition.y) ? -1 : (desiredPosition.y > initialPosition.y) ? 1 : 0
         let passedPosition = {x: initialPosition.x + (multiplierX), y: initialPosition.y + multiplierY}
-        if (Math.abs(desiredPosition.x - initialPosition.x) === 2 && desiredPosition.y === initialPosition.y && check !== true) {
-          if (!this.tileIsOccupied(desiredPosition, boardState)) {
-            if (desiredPosition.x - initialPosition.x === -2){
-              console.log('long castle attempt')
-              for ( let i = 1; i < 3; i++) {
-                let passedPosition = {x: initialPosition.x -i, y: initialPosition.y}
-                if (this.tileIsSafe(passedPosition, boardState, team)) {
-                  if (samePosition(passedPosition, desiredPosition)) {
-                    if (!this.tileIsOccupied({x:passedPosition.x - 1, y: passedPosition.y}, boardState)) {
+        console.log(checked)
+        if (checked === false) {
+          console.log('what is checked', checked)
+          if (Math.abs(desiredPosition.x - initialPosition.x) === 2 && desiredPosition.y === initialPosition.y) {
+            if (!this.tileIsOccupied(desiredPosition, boardState)) {
+              if (desiredPosition.x - initialPosition.x === -2){
+                console.log('long castle attempt')
+                for ( let i = 1; i < 3; i++) {
+                  let passedPosition = {x: initialPosition.x -i, y: initialPosition.y}
+                  if (this.tileIsSafe(passedPosition, boardState, team)) {
+                    if (samePosition(passedPosition, desiredPosition)) {
+                      if (!this.tileIsOccupied({x:passedPosition.x - 1, y: passedPosition.y}, boardState)) {
+                        const king = boardState.find(p => p.type === type && p.team === team)
+                        const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 0 && p.castle)
+                        rook.position.x = desiredPosition.x + 1
+                        rook.castle = false
+                        king.castle = false
+                        return true
+                      }
+                    } else if (this.tileIsOccupied(passedPosition, boardState)) {
+                      break;
+                    }
+                  }
+                }
+              } else if (desiredPosition.x - initialPosition.x === 2) {
+                console.log('short castle attempt')
+                console.log(checked)
+                for ( let i = 1; i < 3; i++) {
+                  let passedPosition = {x: initialPosition.x + i, y: initialPosition.y}
+                  if (this.tileIsSafe(passedPosition, boardState, team)) {
+                    if (samePosition(passedPosition, desiredPosition)) {
                       const king = boardState.find(p => p.type === type && p.team === team)
-                      const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 0 && p.castle)
-                      rook.position.x = desiredPosition.x + 1
+                      const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 7 && p.castle)
+                      rook.position.x = desiredPosition.x - 1
                       rook.castle = false
                       king.castle = false
                       return true
+                    } else if (this.tileIsOccupied(passedPosition, boardState)) {
+                      break;
                     }
-                  } else if (this.tileIsOccupied(passedPosition, boardState)) {
-                    break;
-                  }
-                }
-              }
-            } else if (desiredPosition.x - initialPosition.x === 2) {
-              console.log('short castle attempt')
-              for ( let i = 1; i < 3; i++) {
-                let passedPosition = {x: initialPosition.x + i, y: initialPosition.y}
-                if (this.tileIsSafe(passedPosition, boardState, team)) {
-                  if (samePosition(passedPosition, desiredPosition)) {
-                    const king = boardState.find(p => p.type === type && p.team === team)
-                    const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 7 && p.castle)
-                    rook.position.x = desiredPosition.x - 1
-                    rook.castle = false
-                    king.castle = false
-                    return true
-                  } else if (this.tileIsOccupied(passedPosition, boardState)) {
-                    break;
                   }
                 }
               }
             }
+          } else if (samePosition(passedPosition, desiredPosition)) {
+            if (this.tileIsEmptyOrOccupiedByOpponent(passedPosition, boardState, team)) {
+              return true
+            }
+          } else if (this.tileIsOccupied(passedPosition, boardState)) {
+              return false
           }
         }
-        else if (samePosition(passedPosition, desiredPosition) && check !== true) {
-          if (this.tileIsEmptyOrOccupiedByOpponent(passedPosition, boardState, team)) {
-            return true
-          }
-        } else if (this.tileIsOccupied(passedPosition, boardState)) {
-            return false
-        } else if (check) {
-            console.log(this.tileIsSafe(passedPosition, boardState, team))
+         else if (checked === true) {
+          console.log('ref checked')
           if (this.tileIsSafe(passedPosition, boardState, team)) {
             return true
           }
-            return false
         }
       }
     }

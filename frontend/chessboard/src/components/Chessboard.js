@@ -24,13 +24,11 @@ const Chessboard = ()=> {
   const [pieces, setPieces] = useState(initialBoardState)
   const [grabPosition, setGrabPosition] = useState({x:-1, y: -1})
   const [turn, setTurn] = useState('opponent')
-  const [check, setCheck] = useState(false)
   const chessboardRef = useRef(null)
   const referee = new Referee()
 
   const grabPiece= (e)=> {
     const element = e.target
-
     if (element.classList.contains('chess-piece')) {
       const chessboard = chessboardRef.current
       const grabX = Math.floor((e.clientX - chessboard.offsetLeft)/GRIDSIZE)
@@ -47,7 +45,6 @@ const Chessboard = ()=> {
 
   const movePiece = (e)=> {
     const chessboard = chessboardRef.current
-
       if (activePiece && chessboard) {
         const x = e.clientX - GRIDSIZE / 2
         const y = e.clientY - GRIDSIZE / 2
@@ -94,7 +91,7 @@ const Chessboard = ()=> {
             currentPiece.type,
             currentPiece.team,
             pieces,
-            check
+            currentPiece.checked
           )
 
           const isEnPassant = referee.isEnPassantMove(
@@ -124,8 +121,18 @@ const Chessboard = ()=> {
           const pawnDirection = currentPiece.team === 'ours' ? -1: 1
 
           if (isCheck) {
-            setCheck(true)
+            const updatedPieces = pieces.reduce((results, piece)=> {
+              if (piece.team !== currentPiece.team && piece.team === 'king') {
+                piece.castle = false
+                piece.check = true
+                results.push(piece)
+              }
+              return results
+            }, [])
+            setPieces(updatedPieces)
+            setTurn(turn === 'opponent' ? 'ours': 'opponent')
           }
+
           if (isPromotion) {
             const updatedPieces = pieces.reduce((results, piece)=> {
               if (samePosition(piece.position, grabPosition)) {
@@ -177,8 +184,6 @@ const Chessboard = ()=> {
             }, [])
             setPieces(updatedPieces)
             setTurn(turn === 'opponent' ? 'ours': 'opponent')
-
-
           } else {
             activePiece.style.position = 'relative'
             activePiece.style.removeProperty('top')
@@ -194,7 +199,7 @@ const Chessboard = ()=> {
                 {x, y},
                 p.type,
                 p.team,
-                value
+                value,
               )
               if (validMove) {
                 p.position.x = x
