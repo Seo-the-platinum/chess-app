@@ -118,6 +118,14 @@ const Chessboard = ()=> {
               currentPiece.type
           )
 
+          const isCheckMate = referee.isCheckMate(
+            grabPosition,
+            {x,y},
+            pieces,
+            currentPiece.team,
+            currentPiece.type
+          )
+
           const pawnDirection = currentPiece.team === 'ours' ? -1: 1
 
           if (isCheck) {
@@ -131,6 +139,10 @@ const Chessboard = ()=> {
             }, [])
             setPieces(updatedPieces)
             setTurn(turn === 'opponent' ? 'ours': 'opponent')
+          }
+
+          if (isCheckMate) {
+            console.log('tenative checkmate')
           }
 
           if (isPromotion) {
