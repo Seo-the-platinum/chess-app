@@ -29,14 +29,20 @@ export default class Referee {
     }
 
   tileIsSafe (position, boardState, team) {
-    const enemies = boardState.filter(p=> {
-      return p.team !== team
-    })
-    const ep = enemies.filter(e => {
-      if (this.isValidMove(e.position, position, e.type, e.team, boardState) === true) {
-        return true
+    const ep = []
+    let pawnDirection = team === 'ours' ? -1 : 1
+      boardState.filter(p => {
+        if (p.type === 'pawn' && p.team !== team) {
+          if (position.x - p.position.x === -1 && position.y - p.position.y === pawnDirection) {
+            ep.push(p)
+          } else if (position.x - p.position.x === 1 && position.y - p.position.y === pawnDirection) {
+            ep.push(p)
+          }
+        }
+      if (this.isValidMove(p.position, position, p.type, p.team, boardState) === true && p.team !== team) {
+        ep.push(p)
       }
-      return false
+      return p
     })
     if (ep.length > 0) {
       return false
@@ -105,7 +111,8 @@ export default class Referee {
     type
   ) {
     const king = boardState.find(p=> p.team !== team && p.type === 'king')
-    const findBlockers = boardState.filter(p=> {
+    const findBlockers = []
+    boardState.filter(p=> {
       if (p.team !== team && p.type !== 'king') {
         const blockablePositions= {
           x: king.position.x - desiredPosition.x,
@@ -114,9 +121,9 @@ export default class Referee {
             for (let j = 1; j < Math.abs(blockablePositions.y); j++) {
               let iDirect = blockablePositions.x < 0 ? -1 : 1
               let jDirect = blockablePositions.y < 0 ? -1 : 1
-              console.log(i*iDirect + desiredPosition.x, j*jDirect + desiredPosition.y)
               if (this.isValidMove(
-                desiredPosition,{x: i*iDirect + (desiredPosition.x), y: j*jDirect + (desiredPosition.y)},
+                desiredPosition,
+                {x: i*iDirect + (desiredPosition.x), y: j*jDirect + (desiredPosition.y)},
                 type,
                 team,
                 boardState
@@ -130,6 +137,7 @@ export default class Referee {
                   king.checked
                 )){
                   console.log('can be blocked', p)
+                  findBlockers.push(p)
                   return true
                 }
               }
@@ -138,7 +146,7 @@ export default class Referee {
       }
       return p
     })
-    if (findBlockers) {
+    if (findBlockers.length > 0) {
       return true
     } else {
       return false
@@ -162,7 +170,11 @@ export default class Referee {
             let passedPosition = {x: eKing.position.x + (xCoord), y: eKing.position.y + (yCoord)}
             if (!this.isValidMove(eKing.position, passedPosition, eKing.type, eKing.team, boardState)) {
               if(!this.canBeBlocked(initialPosition, desiredPosition, boardState, team, type)) {
-                console.log('unblockable')
+                if (this.tileIsSafe(desiredPosition, boardState, team)) {
+                  console.log('you might be check mated')
+                }
+                console.log('cant be blocked but can be killed')
+                return false
               }
             }
           }
