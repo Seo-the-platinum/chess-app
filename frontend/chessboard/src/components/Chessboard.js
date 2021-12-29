@@ -8,6 +8,7 @@ import {
   initialBoardState,
   samePosition,
  } from '../Constants.js'
+import Alert from 'react-popup-alert'
 
 const container = {
   display: 'flex',
@@ -15,15 +16,20 @@ const container = {
   borderColor: 'black',
   borderWidth: '2',
   flexWrap: 'wrap',
-  width: '640px',
+  width: '560px',
 }
 
 const Chessboard = ()=> {
-  const board = []
+  let board = []
   const [activePiece, setActivePiece] = useState(null)
   const [pieces, setPieces] = useState(initialBoardState)
   const [grabPosition, setGrabPosition] = useState({x:-1, y: -1})
   const [turn, setTurn] = useState('opponent')
+  const [alert, setAlert] = useState({
+    type: '',
+    text: 'alert message',
+    show: false,
+  })
   const chessboardRef = useRef(null)
   const referee = new Referee()
 
@@ -118,6 +124,14 @@ const Chessboard = ()=> {
               currentPiece.type
           )
 
+          const isSelfCheck = referee.isSelfCheck(
+            grabPosition,
+            {x,y},
+            pieces,
+            currentPiece.team,
+            currentPiece.type,
+          )
+
           const isCheckMate = referee.isCheckMate(
             grabPosition,
             {x,y},
@@ -141,8 +155,13 @@ const Chessboard = ()=> {
             setTurn(turn === 'opponent' ? 'ours': 'opponent')
           }
 
+          if (isSelfCheck) {
+            console.log('no need to check yourself')
+          }
+
           if (isCheckMate) {
-            console.log('tenative checkmate')
+            console.log('game over')
+            //onShowAlert()
           }
 
           if (isPromotion) {
@@ -179,7 +198,6 @@ const Chessboard = ()=> {
           }
           //REDUCE FUNCTION
           else if (validMove) {
-            console.log('validMove')
             const updatedPieces = pieces.reduce((results, piece) => {
               if (samePosition(piece.position, grabPosition)) {
                 piece.enPassant = Math.abs(grabPosition.y - y) === 2 && piece.type === 'pawn'
@@ -237,7 +255,25 @@ const Chessboard = ()=> {
     }
   }
 
-  HORIZONTAL.map((h, hIndex)=> {
+  const onCloseAlert = () => {
+    setAlert({
+      type: '',
+      text: '',
+      show: false,
+    })
+    window.location.reload()
+  }
+
+  const onShowAlert = () => {
+    const winner = turn === 'opponent' ? 'Light' : 'Dark'
+      setAlert({
+        type: '',
+        text: `Checkmate! ${winner} wins!`,
+        show: true
+      })
+  }
+
+    HORIZONTAL.map((h, hIndex)=> {
     VERTICAL.map((v, vIndex)=> {
       const sum = vIndex + hIndex
       const piece = pieces.find(p=> samePosition(p.position, {x: vIndex, y: hIndex}))
@@ -249,7 +285,11 @@ const Chessboard = ()=> {
   })
 
   return (
-    <div>
+    <div style={{
+        border: 'solid red 1px',
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: '100%'}}>
       <div>{turn === 'ours' ? 'Dark': 'Light'}</div>
       <div
         onMouseDown={e=> grabPiece(e)}
@@ -259,6 +299,27 @@ const Chessboard = ()=> {
         style={container}>
         {board}
       </div>
+      <Alert
+        header={'Header'}
+        btnText={'Close'}
+        text={alert.text}
+        type={alert.type}
+        show={alert.show}
+        onClosePress={onCloseAlert}
+        pressCloseOnOutsideClick={true}
+        showBorderBottom={true}
+        alertStyles={{
+          backgroundColor: 'white',
+          border: 'solid black 5px',
+          position: 'absolute',
+          top: '10%',
+          right: '25%',
+          width: '50%'
+        }}
+        headerStyles={{}}
+        textStyles={{}}
+        buttonStyles={{}}
+      />
     </div>
   )
 }

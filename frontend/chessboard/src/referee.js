@@ -39,11 +39,12 @@ export default class Referee {
             ep.push(p)
           }
         }
-      if (this.isValidMove(p.position, position, p.type, p.team, boardState) === true && p.team !== team) {
+       else if (this.isValidMove(p.position, position, p.type, p.team, boardState) === true && p.team !== team) {
         ep.push(p)
       }
       return p
     })
+    console.log('checking tile is safe')
     if (ep.length > 0) {
       return false
     }
@@ -93,7 +94,9 @@ export default class Referee {
     team,
     type,
   ) {
+    console.log(initialPosition, desiredPosition, team, type)
     if (this.isValidMove(initialPosition, desiredPosition, type, team, boardState)) {
+      console.log('valid check move')
       const eKing = boardState.find(k=> k.team !== team)
       if (this.isValidMove(desiredPosition, eKing.position, type, team, boardState)) {
         eKing.checked = true
@@ -101,6 +104,7 @@ export default class Referee {
         return true
       }
     }
+    return false
   }
 
   canBeBlocked(
@@ -136,7 +140,6 @@ export default class Referee {
                   boardState,
                   king.checked
                 )){
-                  console.log('can be blocked', p)
                   findBlockers.push(p)
                   return true
                 }
@@ -172,6 +175,7 @@ export default class Referee {
               if(!this.canBeBlocked(initialPosition, desiredPosition, boardState, team, type)) {
                 if (this.tileIsSafe(desiredPosition, boardState, team)) {
                   console.log('you might be check mated')
+                  return true
                 }
                 console.log('cant be blocked but can be killed')
                 return false
@@ -182,6 +186,24 @@ export default class Referee {
       }
     }
     return false
+  }
+
+  isSelfCheck (initialPosition, desiredPosition, boardState, team, type) {
+    if (this.isValidMove(initialPosition, desiredPosition, type, team, boardState)) {
+      console.log(initialPosition, desiredPosition, team, type)
+      const king = boardState.find(p=> p.team === team && p.type === 'king')
+      const ePieces = boardState.filter(piece => piece.team !== team)
+      const checkers = ePieces.filter(piece => {
+        console.log(this.isCheck(piece.position, king.position, boardState, piece.team, piece.type))
+        return this.isCheck(piece.position, king.position, boardState, piece.team, piece.type) === true
+      })
+      console.log(checkers)
+      if (checkers.length > 0) {
+        return false
+      }
+      return true
+      }
+      return true
   }
 
   isValidMove(
@@ -247,7 +269,6 @@ export default class Referee {
         }
       } else if (type === 'bishop') {
         //MOVEMENT AND ATTATCK LOGIC FOR BISHOP
-
         for ( let i = 1; i < 8; i++) {
           //BOTTOM RIGHT MOVEMENT
           if (desiredPosition.x > initialPosition.x && desiredPosition.y > initialPosition.y) {
@@ -262,7 +283,6 @@ export default class Referee {
                 }
             }
           }
-
           //UPPER RIGHT MOVEMENT
           if (desiredPosition.x > initialPosition.x && desiredPosition.y < initialPosition.y) {
             let passedPosition = {x:initialPosition.x+ i, y: initialPosition.y - i}

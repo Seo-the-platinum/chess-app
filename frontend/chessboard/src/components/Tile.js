@@ -6,8 +6,8 @@ const white = {
   border: 'solid',
   borderColor: 'black',
   borderWidth: 1,
-  height: '78px',
-  width: '78px',
+  height: '68px',
+  width: '68px',
 }
 
 const green = {
@@ -15,8 +15,8 @@ const green = {
   border: 'solid',
   borderColor: 'black',
   borderWidth: 1,
-  height: '78px',
-  width: '78px',
+  height: '68px',
+  width: '68px',
 }
 
 const Tile = (props)=> {
