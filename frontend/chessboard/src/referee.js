@@ -94,9 +94,7 @@ export default class Referee {
     team,
     type,
   ) {
-    console.log(initialPosition, desiredPosition, team, type)
     if (this.isValidMove(initialPosition, desiredPosition, type, team, boardState)) {
-      console.log('valid check move')
       const eKing = boardState.find(k=> k.team !== team)
       if (this.isValidMove(desiredPosition, eKing.position, type, team, boardState)) {
         eKing.checked = true
@@ -190,19 +188,32 @@ export default class Referee {
 
   isSelfCheck (initialPosition, desiredPosition, boardState, team, type) {
     if (this.isValidMove(initialPosition, desiredPosition, type, team, boardState)) {
-      console.log(initialPosition, desiredPosition, team, type)
       const king = boardState.find(p=> p.team === team && p.type === 'king')
       const ePieces = boardState.filter(piece => piece.team !== team)
-      const checkers = ePieces.filter(piece => {
-        console.log(this.isCheck(piece.position, king.position, boardState, piece.team, piece.type))
-        return this.isCheck(piece.position, king.position, boardState, piece.team, piece.type) === true
+      const activePiece = boardState.find(p=> samePosition(p.position, initialPosition))
+      activePiece.position.x = desiredPosition.x
+      activePiece.position.y = desiredPosition.y
+      const checkers =[]
+        ePieces.filter(piece => {
+        if (this.isValidMove(piece.position, king.position, piece.type, piece.team, boardState)) {
+          console.log('si checkers')
+          activePiece.position.x = initialPosition.x
+          activePiece.position.y = initialPosition.y
+          return checkers.push(piece)
+        }
+        console.log('no checkers')
+        return null
       })
-      console.log(checkers)
+      console.log(checkers.length > 0)
       if (checkers.length > 0) {
+        console.log('should return true and move should not be allowed')
+        return true
+      } else {
+        activePiece.position.x = initialPosition.x
+        activePiece.position.y = initialPosition.y
         return false
       }
-      return true
-      }
+    }
       return true
   }
 
@@ -240,7 +251,7 @@ export default class Referee {
             return true
             }
         }
-      } else if(type === 'knight') {
+      } else if (type === 'knight') {
         //moving logic for knight
         //8 different moving patterns
         for (let i = -1; i < 2; i+=2) {
