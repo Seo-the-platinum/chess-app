@@ -130,6 +130,7 @@ const Chessboard = ()=> {
             pieces,
             currentPiece.team,
             currentPiece.type,
+            currentPiece.checked
           )
 
           const isCheckMate = referee.isCheckMate(
@@ -155,14 +156,8 @@ const Chessboard = ()=> {
             setTurn(turn === 'opponent' ? 'ours': 'opponent')
           }
 
-          if (isSelfCheck) {
-            console.log('check yourself!')
-
-          }
-
           if (isCheckMate) {
-            console.log('game over')
-            //onShowAlert()
+            onShowAlert()
           }
 
           if (isPromotion) {
@@ -199,8 +194,6 @@ const Chessboard = ()=> {
           }
           //REDUCE FUNCTION
           else if (validMove && !isSelfCheck) {
-            console.log(validMove, isSelfCheck)
-            console.log('validMove')
             const updatedPieces = pieces.reduce((results, piece) => {
               if (samePosition(piece.position, grabPosition)) {
                 piece.enPassant = Math.abs(grabPosition.y - y) === 2 && piece.type === 'pawn'
@@ -235,6 +228,7 @@ const Chessboard = ()=> {
                 p.team,
                 value,
               )
+
               const isSelfCheck = referee.isSelfCheck(
                 grabPosition,
                 {x,y},
@@ -242,6 +236,7 @@ const Chessboard = ()=> {
                 currentPiece.team,
                 currentPiece.type,
               )
+
               if (validMove && !isSelfCheck) {
                 p.position.x = x
                 p.position.y = y
@@ -296,7 +291,6 @@ const Chessboard = ()=> {
 
   return (
     <div style={{
-        border: 'solid red 1px',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: '100%'}}>

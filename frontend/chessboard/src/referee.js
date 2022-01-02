@@ -38,13 +38,18 @@ export default class Referee {
           } else if (position.x - p.position.x === 1 && position.y - p.position.y === pawnDirection) {
             ep.push(p)
           }
+        } else if (p.type === 'king' && p.team !== team) {
+          let multiplierX = (position.x < p.position.x) ? -1 : (position.x > p.position.x) ? 1 : 0
+          let multiplierY = (position.y < p.position.y) ? -1 : (position.y > p.position.y) ? 1 : 0
+          if (position.x - p.position.x === multiplierX && position.y - p.position.y === multiplierY) {
+            ep.push(p)
+          }
         }
-       else if (this.isValidMove(p.position, position, p.type, p.team, boardState) === true && p.team !== team) {
+       else if (this.isValidMove(p.position, position, p.type, p.team, boardState) === true && p.team !== team && p.type !== 'king') {
         ep.push(p)
       }
-      return p
+      return null
     })
-    console.log('checking tile is safe')
     if (ep.length > 0) {
       return false
     }
@@ -118,11 +123,61 @@ export default class Referee {
       if (p.team !== team && p.type !== 'king') {
         const blockablePositions= {
           x: king.position.x - desiredPosition.x,
-          y: king.position.y - desiredPosition.y}
-          for (let i = 1; i < Math.abs(blockablePositions.x); i++) {
-            for (let j = 1; j < Math.abs(blockablePositions.y); j++) {
-              let iDirect = blockablePositions.x < 0 ? -1 : 1
-              let jDirect = blockablePositions.y < 0 ? -1 : 1
+          y: king.position.y - desiredPosition.y
+        }
+          let iDirect = (blockablePositions.x === 0) ? 0 : blockablePositions.x < 0 ? -1 : 1
+          let jDirect = (blockablePositions.y === 0) ? 0 : blockablePositions.y < 0 ? -1 : 1
+          if (!samePosition(king.position, desiredPosition)) {
+            if(blockablePositions.x === 0) {
+              let i = 0
+              for (let j = 1; j < Math.abs(blockablePositions.y); j++) {
+                if (this.isValidMove(
+                  desiredPosition,
+                  {x: i*iDirect + (desiredPosition.x), y: j*jDirect + (desiredPosition.y)},
+                  type,
+                  team,
+                  boardState
+                )) {
+                  if (this.isValidMove(
+                    p.position,
+                    {x: i*iDirect + (desiredPosition.x), y: j*jDirect + (desiredPosition.y)},
+                    p.type,
+                    p.team,
+                    boardState,
+                    king.checked
+                  )){
+                    findBlockers.push(p)
+                    return true
+                  }
+                }
+              }
+            } else if (blockablePositions.y === 0) {
+              for (let i = 0; i < Math.abs(blockablePositions.x); i++) {
+                let j = 0
+                if (this.isValidMove(
+                  desiredPosition,
+                  {x: i*iDirect + (desiredPosition.x), y: j*jDirect + (desiredPosition.y)},
+                  type,
+                  team,
+                  boardState
+                )) {
+                  if (this.isValidMove(
+                    p.position,
+                    {x: i*iDirect + (desiredPosition.x), y: j*jDirect + (desiredPosition.y)},
+                    p.type,
+                    p.team,
+                    boardState,
+                    king.checked
+                  )){
+                    findBlockers.push(p)
+                    return true
+                  }
+                }
+              }
+            }
+          }
+          for (let i = 0; i < Math.abs(blockablePositions.x); i++) {
+            for (let j = 0; j < Math.abs(blockablePositions.y); j++) {
               if (this.isValidMove(
                 desiredPosition,
                 {x: i*iDirect + (desiredPosition.x), y: j*jDirect + (desiredPosition.y)},
@@ -172,10 +227,8 @@ export default class Referee {
             if (!this.isValidMove(eKing.position, passedPosition, eKing.type, eKing.team, boardState)) {
               if(!this.canBeBlocked(initialPosition, desiredPosition, boardState, team, type)) {
                 if (this.tileIsSafe(desiredPosition, boardState, team)) {
-                  console.log('you might be check mated')
                   return true
                 }
-                console.log('cant be blocked but can be killed')
                 return false
               }
             }
@@ -186,8 +239,8 @@ export default class Referee {
     return false
   }
 
-  isSelfCheck (initialPosition, desiredPosition, boardState, team, type) {
-    if (this.isValidMove(initialPosition, desiredPosition, type, team, boardState)) {
+  isSelfCheck (initialPosition, desiredPosition, boardState, team, type, checked) {
+    if (this.isValidMove(initialPosition, desiredPosition, type, team, boardState, checked)) {
       const king = boardState.find(p=> p.team === team && p.type === 'king')
       const ePieces = boardState.filter(piece => piece.team !== team)
       const activePiece = boardState.find(p=> samePosition(p.position, initialPosition))
@@ -196,17 +249,20 @@ export default class Referee {
       const checkers =[]
         ePieces.filter(piece => {
         if (this.isValidMove(piece.position, king.position, piece.type, piece.team, boardState)) {
-          console.log('si checkers')
           activePiece.position.x = initialPosition.x
           activePiece.position.y = initialPosition.y
           return checkers.push(piece)
         }
-        console.log('no checkers')
         return null
       })
-      console.log(checkers.length > 0)
       if (checkers.length > 0) {
-        console.log('should return true and move should not be allowed')
+        if (checkers.length === 1) {
+          if (this.isValidMove(initialPosition, checkers[0].position, type, team, boardState)) {
+            if (samePosition(checkers[0].position, desiredPosition)) {
+              return false
+            }
+          }
+        }
         return true
       } else {
         activePiece.position.x = initialPosition.x
@@ -404,7 +460,6 @@ export default class Referee {
                 }
               } else if (desiredPosition.x - initialPosition.x === 2) {
                 console.log('short castle attempt')
-                console.log(checked)
                 for ( let i = 1; i < 3; i++) {
                   let passedPosition = {x: initialPosition.x + i, y: initialPosition.y}
                   if (this.tileIsSafe(passedPosition, boardState, team)) {
