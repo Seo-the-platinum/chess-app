@@ -239,16 +239,59 @@ export default class Referee {
     return false
   }
 
+  isCastle (initialPosition, desiredPosition, boardState, team, type, checked) {
+    if (type === 'king' && checked === false) {
+      console.log(initialPosition.x - desiredPosition.x)
+      if (Math.abs(initialPosition.x - desiredPosition.x) === 2 && (desiredPosition.y === initialPosition.y)) {
+        console.log('checking here')
+        if (!this.tileIsOccupied(desiredPosition, boardState)) {
+          if (desiredPosition.x - initialPosition.x === -2){
+            console.log('long castle attempt')
+            for ( let i = 1; i < 3; i++) {
+              let passedPosition = {x: initialPosition.x -i, y: initialPosition.y}
+              if (this.tileIsSafe(passedPosition, boardState, team)) {
+                if (samePosition(passedPosition, desiredPosition)) {
+                  if (!this.tileIsOccupied({x:passedPosition.x - 1, y: passedPosition.y}, boardState)) {
+                    return true
+                  }
+                } else if (this.tileIsOccupied(passedPosition, boardState)) {
+                  break;
+                }
+              }
+            }
+          } else if (desiredPosition.x - initialPosition.x === 2) {
+            console.log('short castle attempt', desiredPosition)
+            for ( let i = 1; i < 3; i++) {
+              let passedPosition = {x: initialPosition.x + i, y: initialPosition.y}
+              if (this.tileIsSafe(passedPosition, boardState, team)) {
+                if (samePosition(passedPosition, desiredPosition)) {
+                  if (!this.tileIsOccupied({x:passedPosition.x -1, y: passedPosition.y}, boardState)) {
+                    return true
+                  }
+                } else if (this.tileIsOccupied(passedPosition, boardState)) {
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   isSelfCheck (initialPosition, desiredPosition, boardState, team, type, checked) {
     if (this.isValidMove(initialPosition, desiredPosition, type, team, boardState, checked)) {
       const king = boardState.find(p=> p.team === team && p.type === 'king')
       const ePieces = boardState.filter(piece => piece.team !== team)
-      const activePiece = boardState.find(p=> samePosition(p.position, initialPosition))
+      const activePiece = type === 'king' ? king : boardState.find(p=> samePosition(p.position, initialPosition))
       activePiece.position.x = desiredPosition.x
       activePiece.position.y = desiredPosition.y
       const checkers =[]
         ePieces.filter(piece => {
         if (this.isValidMove(piece.position, king.position, piece.type, piece.team, boardState)) {
+          if (samePosition(desiredPosition, piece.position)) {
+            return false
+          }
           activePiece.position.x = initialPosition.x
           activePiece.position.y = initialPosition.y
           return checkers.push(piece)
@@ -437,47 +480,7 @@ export default class Referee {
         let multiplierY = (desiredPosition.y < initialPosition.y) ? -1 : (desiredPosition.y > initialPosition.y) ? 1 : 0
         let passedPosition = {x: initialPosition.x + (multiplierX), y: initialPosition.y + multiplierY}
         if (checked === false) {
-          if (Math.abs(desiredPosition.x - initialPosition.x) === 2 && desiredPosition.y === initialPosition.y) {
-            if (!this.tileIsOccupied(desiredPosition, boardState)) {
-              if (desiredPosition.x - initialPosition.x === -2){
-                console.log('long castle attempt')
-                for ( let i = 1; i < 3; i++) {
-                  let passedPosition = {x: initialPosition.x -i, y: initialPosition.y}
-                  if (this.tileIsSafe(passedPosition, boardState, team)) {
-                    if (samePosition(passedPosition, desiredPosition)) {
-                      if (!this.tileIsOccupied({x:passedPosition.x - 1, y: passedPosition.y}, boardState)) {
-                        const king = boardState.find(p => p.type === type && p.team === team)
-                        const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 0 && p.castle)
-                        rook.position.x = desiredPosition.x + 1
-                        rook.castle = false
-                        king.castle = false
-                        return true
-                      }
-                    } else if (this.tileIsOccupied(passedPosition, boardState)) {
-                      break;
-                    }
-                  }
-                }
-              } else if (desiredPosition.x - initialPosition.x === 2) {
-                console.log('short castle attempt')
-                for ( let i = 1; i < 3; i++) {
-                  let passedPosition = {x: initialPosition.x + i, y: initialPosition.y}
-                  if (this.tileIsSafe(passedPosition, boardState, team)) {
-                    if (samePosition(passedPosition, desiredPosition)) {
-                      const king = boardState.find(p => p.type === type && p.team === team)
-                      const rook = boardState.find(p => p.type === 'rook' && p.team === team && p.position.x === 7 && p.castle)
-                      rook.position.x = desiredPosition.x - 1
-                      rook.castle = false
-                      king.castle = false
-                      return true
-                    } else if (this.tileIsOccupied(passedPosition, boardState)) {
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-          } else if (samePosition(passedPosition, desiredPosition)) {
+          if (samePosition(passedPosition, desiredPosition)) {
             if (this.tileIsEmptyOrOccupiedByOpponent(passedPosition, boardState, team)) {
               return true
             }
@@ -487,7 +490,14 @@ export default class Referee {
         }
          else if (checked === true) {
           if (this.tileIsSafe(passedPosition, boardState, team)) {
-            return true
+            if (samePosition(passedPosition, desiredPosition)) {
+              if (this.tileIsEmptyOrOccupiedByOpponent(passedPosition, boardState, team)) {
+                console.log('...returning true')
+                 return true
+             } else if (this.tileIsOccupied(passedPosition, boardState)) {
+               return false
+             }
+            }
           }
         }
       }

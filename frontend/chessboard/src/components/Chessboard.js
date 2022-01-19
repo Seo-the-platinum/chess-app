@@ -91,12 +91,13 @@ const Chessboard = ()=> {
       const currentPiece = pieces.find(p=> samePosition(p.position, grabPosition))
       if (currentPiece.team === turn) {
         if (currentPiece) {
-          const validMove = referee.isValidMove(
+
+          const isCastle = referee.isCastle(
             grabPosition,
-            {x, y},
-            currentPiece.type,
-            currentPiece.team,
+            {x,y},
             pieces,
+            currentPiece.team,
+            currentPiece.type,
             currentPiece.checked
           )
 
@@ -141,11 +142,44 @@ const Chessboard = ()=> {
             currentPiece.type
           )
 
+          const validMove = referee.isValidMove(
+            grabPosition,
+            {x, y},
+            currentPiece.type,
+            currentPiece.team,
+            pieces,
+            currentPiece.checked
+          )
+
           const pawnDirection = currentPiece.team === 'ours' ? -1: 1
+
+          if (isCastle) {
+            const side= x - grabPosition.x === -2 ? 0 : 7
+              const updatedPieces = pieces.reduce((results, piece)=> {
+                if (piece.team === currentPiece.team && piece.type === 'king') {
+                  piece.position.x = x
+                  piece.castle = false
+                  results.push(piece)
+                } else if (piece.team === currentPiece.team && piece.type === 'rook' && piece.position.x === side) {
+                  if (side > 0) {
+                    piece.position.x = x -1
+                    piece.castle = false
+                    results.push(piece)
+                  } else {
+                  piece.position.x = x + 1
+                  piece.castle = false
+                  results.push(piece) }
+                }
+                results.push(piece)
+                return results
+              }, [])
+              setPieces(updatedPieces)
+              setTurn(turn === 'opponent' ? 'ours' : 'opponent')
+          }
 
           if (isCheck) {
             const updatedPieces = pieces.reduce((results, piece)=> {
-              if (piece.team !== currentPiece.team && piece.team === 'king') {
+              if (piece.team !== currentPiece.team && piece.type === 'king') {
                 piece.castle = false
                 piece.check = true
                 results.push(piece)
@@ -194,6 +228,7 @@ const Chessboard = ()=> {
           }
           //REDUCE FUNCTION
           else if (validMove && !isSelfCheck) {
+            console.log('should be valid')
             const updatedPieces = pieces.reduce((results, piece) => {
               if (samePosition(piece.position, grabPosition)) {
                 piece.enPassant = Math.abs(grabPosition.y - y) === 2 && piece.type === 'pawn'
