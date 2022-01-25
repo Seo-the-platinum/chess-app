@@ -228,7 +228,6 @@ const Chessboard = ()=> {
           }
           //REDUCE FUNCTION
           else if (validMove && !isSelfCheck) {
-            console.log('should be valid')
             const updatedPieces = pieces.reduce((results, piece) => {
               if (samePosition(piece.position, grabPosition)) {
                 piece.enPassant = Math.abs(grabPosition.y - y) === 2 && piece.type === 'pawn'

@@ -30,7 +30,7 @@ export default class Referee {
 
   tileIsSafe (position, boardState, team) {
     const ep = []
-    let pawnDirection = team === 'ours' ? -1 : 1
+    let pawnDirection = team === 'ours' ? 1 : -1
       boardState.filter(p => {
         if (p.type === 'pawn' && p.team !== team) {
           if (position.x - p.position.x === -1 && position.y - p.position.y === pawnDirection) {
@@ -241,12 +241,9 @@ export default class Referee {
 
   isCastle (initialPosition, desiredPosition, boardState, team, type, checked) {
     if (type === 'king' && checked === false) {
-      console.log(initialPosition.x - desiredPosition.x)
       if (Math.abs(initialPosition.x - desiredPosition.x) === 2 && (desiredPosition.y === initialPosition.y)) {
-        console.log('checking here')
         if (!this.tileIsOccupied(desiredPosition, boardState)) {
           if (desiredPosition.x - initialPosition.x === -2){
-            console.log('long castle attempt')
             for ( let i = 1; i < 3; i++) {
               let passedPosition = {x: initialPosition.x -i, y: initialPosition.y}
               if (this.tileIsSafe(passedPosition, boardState, team)) {
@@ -260,7 +257,6 @@ export default class Referee {
               }
             }
           } else if (desiredPosition.x - initialPosition.x === 2) {
-            console.log('short castle attempt', desiredPosition)
             for ( let i = 1; i < 3; i++) {
               let passedPosition = {x: initialPosition.x + i, y: initialPosition.y}
               if (this.tileIsSafe(passedPosition, boardState, team)) {
@@ -492,7 +488,6 @@ export default class Referee {
           if (this.tileIsSafe(passedPosition, boardState, team)) {
             if (samePosition(passedPosition, desiredPosition)) {
               if (this.tileIsEmptyOrOccupiedByOpponent(passedPosition, boardState, team)) {
-                console.log('...returning true')
                  return true
              } else if (this.tileIsOccupied(passedPosition, boardState)) {
                return false
