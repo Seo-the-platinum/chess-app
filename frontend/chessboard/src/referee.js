@@ -99,9 +99,19 @@ export default class Referee {
     team,
     type,
   ) {
+    const king = boardState.find(p=> p.team === team && p.type === 'king')
     if (this.isValidMove(initialPosition, desiredPosition, type, team, boardState)) {
-      const eKing = boardState.find(k=> k.team !== team)
+      const eKing = boardState.find(p=> p.team !== team && p.type === 'king')
       if (this.isValidMove(desiredPosition, eKing.position, type, team, boardState)) {
+        if (king.checked === true) {
+          const ePieces = boardState.filter(p=> {
+            return p.team !== team && this.isValidMove(p.position, king.position, p.type, p.team, boardState) === true
+          })
+          if (this.isValidMove(initialPosition, ePieces[0].position, type, team, boardState)) {
+            return true
+          }
+          return false
+        }
         eKing.checked = true
         eKing.castle = false
         return true
@@ -231,9 +241,12 @@ export default class Referee {
                 }
                 return false
               }
+            } else if (this.isValidMove(eKing.position, passedPosition, eKing.type, eKing.team, boardState)) {
+              break;
             }
           }
         }
+        return false
       }
     }
     return false
@@ -295,13 +308,14 @@ export default class Referee {
         return null
       })
       if (checkers.length > 0) {
-        if (checkers.length === 1) {
-          if (this.isValidMove(initialPosition, checkers[0].position, type, team, boardState)) {
-            if (samePosition(checkers[0].position, desiredPosition)) {
-              return false
+          if (checkers.length === 1) {
+            if (this.isValidMove(initialPosition, checkers[0].position, type, team, boardState)) {
+              if (samePosition(checkers[0].position, desiredPosition)) {
+                return false
+              }
             }
+            return true
           }
-        }
         return true
       } else {
         activePiece.position.x = initialPosition.x
